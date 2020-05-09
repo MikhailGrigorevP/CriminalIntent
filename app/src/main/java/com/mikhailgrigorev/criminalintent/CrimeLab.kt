@@ -1,7 +1,6 @@
 package com.mikhailgrigorev.criminalintent
 
 import android.content.Context
-import androidx.fragment.app.FragmentActivity
 import java.util.*
 
 
@@ -20,8 +19,12 @@ class CrimeLab private constructor(context: Context) {
     }
 
     companion object {
-        fun get(context: Context): CrimeLab? {
-            return CrimeLab(context)
+        private var sCrimeLab: CrimeLab? = null
+        operator fun get(context: Context): CrimeLab? {
+            if (sCrimeLab == null) {
+                sCrimeLab = CrimeLab(context)
+            }
+            return sCrimeLab
         }
     }
 

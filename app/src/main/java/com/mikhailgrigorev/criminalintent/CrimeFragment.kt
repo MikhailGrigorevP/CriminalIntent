@@ -8,8 +8,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
+import android.widget.CompoundButton
 import android.widget.EditText
 import androidx.fragment.app.Fragment
+import java.util.*
+
 
 class CrimeFragment : Fragment() {
     private var mCrime: Crime? = null
@@ -18,7 +21,8 @@ class CrimeFragment : Fragment() {
     private var mSolvedCheckbox: CheckBox? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mCrime = Crime()
+        val crimeID = activity?.intent?.getSerializableExtra(CrimeActivity().EXSTRACRIMEID) as UUID
+        mCrime = CrimeLab.get(activity!!)?.getCrime(crimeID)
     }
 
     override fun onCreateView(
@@ -28,6 +32,7 @@ class CrimeFragment : Fragment() {
     ): View {
         val v: View = inflater.inflate(R.layout.fragment_crime, container, false)
         mTitleField = v.findViewById<View>(R.id.crime_title) as EditText
+        mTitleField!!.setText(mCrime?.title)
         mTitleField!!.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(
                 s: CharSequence,
@@ -49,13 +54,12 @@ class CrimeFragment : Fragment() {
             override fun afterTextChanged(s: Editable) {}
         })
         mDateButton = v.findViewById<View>(R.id.crime_date) as Button
-        mDateButton!!.text = mCrime!!.date.toString()
+        mDateButton!!.text = mCrime?.date
         mDateButton!!.isEnabled = false
 
         mSolvedCheckbox = v.findViewById<View>(R.id.crime_solved) as CheckBox
-        mSolvedCheckbox!!.setOnCheckedChangeListener { buttonView, isChecked ->
-            mCrime!!.isSolved = isChecked
-        }
+        mSolvedCheckbox!!.isChecked = mCrime!!.isSolved
+        mSolvedCheckbox!!.setOnCheckedChangeListener { buttonView, isChecked -> mCrime!!.isSolved = isChecked }
         return v
     }
 }

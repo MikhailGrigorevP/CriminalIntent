@@ -1,17 +1,17 @@
 package com.mikhailgrigorev.criminalintent
 
+import android.content.ClipData.newIntent
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import java.text.DateFormat
 
 
 class CrimeListFragment: Fragment() {
@@ -50,7 +50,7 @@ class CrimeListFragment: Fragment() {
         fun bind(crime: Crime?) {
             mCrime = crime
             mTitleTextView.text = mCrime!!.title
-            mDateTextView.text = DateFormat.getDateInstance().format(mCrime!!.date)
+            mDateTextView.text = mCrime!!.date
             if (crime != null) {
                 mSolvedImageView.visibility = if (crime.isSolved) {
                     View.VISIBLE
@@ -61,11 +61,8 @@ class CrimeListFragment: Fragment() {
         }
 
         override fun onClick(view: View) {
-            Toast.makeText(
-                view.context,
-                mCrime!!.title + " clicked!", Toast.LENGTH_SHORT
-            )
-                .show()
+            val intent: Intent = CrimeActivity().newIntent(view.context, mCrime!!.id)
+            view.context.startActivity(intent)
         }
 
         init {
