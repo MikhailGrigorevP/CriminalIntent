@@ -1,6 +1,5 @@
 package com.mikhailgrigorev.criminalintent
 
-import android.content.ClipData.newIntent
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -17,7 +16,7 @@ import androidx.recyclerview.widget.RecyclerView.ViewHolder
 class CrimeListFragment: Fragment() {
 
     lateinit var mCrimeRecyclerView: RecyclerView
-    lateinit var mAdapter: CrimeAdapter
+    var mAdapter: CrimeAdapter? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -31,14 +30,21 @@ class CrimeListFragment: Fragment() {
         return view
     }
 
-    private fun updateUI() {
-        val crimeLab = activity?.let { CrimeLab.get(it) }
-        val crimes = crimeLab?.crimes
-        mAdapter = CrimeAdapter(crimes)
-        // Connect the adapter to the recyclerView
-        mCrimeRecyclerView.adapter = mAdapter
+    override fun onResume() {
+        super.onResume()
+        updateUI()
     }
 
+    private fun updateUI() {
+        val crimeLab = CrimeLab[activity!!]
+        val crimes = crimeLab!!.crimes
+        if (mAdapter == null) {
+            mAdapter = CrimeAdapter(crimes)
+            mCrimeRecyclerView.adapter = mAdapter
+        } else {
+            mAdapter!!.notifyDataSetChanged()
+        }
+    }
 
     class CrimeHolder(inflater: LayoutInflater, parent: ViewGroup?) :
         ViewHolder(inflater.inflate(R.layout.list_item_crime, parent, false)),

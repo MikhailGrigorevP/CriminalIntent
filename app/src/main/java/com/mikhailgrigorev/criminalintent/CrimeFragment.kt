@@ -15,14 +15,24 @@ import java.util.*
 
 
 class CrimeFragment : Fragment() {
+    private var ARG_CRIME_ID: String = "crime_id"
     private var mCrime: Crime? = null
     private var mTitleField: EditText? = null
     private var mDateButton: Button? = null
     private var mSolvedCheckbox: CheckBox? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val crimeID = activity?.intent?.getSerializableExtra(CrimeActivity().EXSTRACRIMEID) as UUID
+        val crimeID = arguments?.getSerializable(ARG_CRIME_ID) as UUID
         mCrime = CrimeLab.get(activity!!)?.getCrime(crimeID)
+    }
+
+    fun newInstance(crimeId: UUID): CrimeFragment{
+        val args = Bundle()
+        args.putSerializable(ARG_CRIME_ID, crimeId)
+
+        val fragment = CrimeFragment()
+        fragment.arguments = args
+        return fragment
     }
 
     override fun onCreateView(
@@ -62,4 +72,5 @@ class CrimeFragment : Fragment() {
         mSolvedCheckbox!!.setOnCheckedChangeListener { buttonView, isChecked -> mCrime!!.isSolved = isChecked }
         return v
     }
+
 }

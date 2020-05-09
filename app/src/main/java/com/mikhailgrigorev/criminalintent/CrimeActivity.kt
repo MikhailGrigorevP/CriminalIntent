@@ -4,11 +4,12 @@ import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.fragment.app.Fragment
 import java.util.*
 
-class CrimeActivity : AppCompatActivity() {
+class CrimeActivity : SingleFragmentActivity() {
 
-    val EXSTRACRIMEID: String = "com.mikhailgrigorev.criminalintent.crime_id"
+    private val EXSTRACRIMEID: String = "com.mikhailgrigorev.criminalintent.crime_id"
 
     fun newIntent(packageContext: Context, crimeId:UUID): Intent {
         val intent = Intent(packageContext, CrimeActivity::class.java)
@@ -16,15 +17,9 @@ class CrimeActivity : AppCompatActivity() {
         return intent
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_fragment)
+    override fun createFragment(): Fragment{
+        val crimeId: UUID = intent.getSerializableExtra(EXSTRACRIMEID) as UUID
+        return CrimeFragment().newInstance(crimeId)
 
-        val fm = supportFragmentManager
-        var fragment = fm.findFragmentById(R.id.fragment_container)
-        if (fragment == null) {
-            fragment = CrimeFragment()
-            fm.beginTransaction().add(R.id.fragment_container, fragment).commit()
-        }
     }
 }
