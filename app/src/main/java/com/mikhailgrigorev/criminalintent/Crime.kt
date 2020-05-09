@@ -7,5 +7,6 @@ class Crime {
     var title: String? = null
     var date: Date = Date()
     var isSolved = false
+    var requiresPolice = false
 
 }
