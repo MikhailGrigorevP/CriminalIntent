@@ -1,6 +1,7 @@
 package com.mikhailgrigorev.criminalintent
 
 import android.content.Context
+import androidx.fragment.app.FragmentActivity
 import java.util.*
 
 
@@ -18,11 +19,15 @@ class CrimeLab private constructor(context: Context) {
         return null
     }
 
+    fun addCrime(c: Crime){
+        mCrimes.add(c)
+    }
+
     companion object {
         private var sCrimeLab: CrimeLab? = null
-        operator fun get(context: Context): CrimeLab? {
+        operator fun get(context: FragmentActivity?): CrimeLab? {
             if (sCrimeLab == null) {
-                sCrimeLab = CrimeLab(context)
+                sCrimeLab = context?.let { CrimeLab(it) }
             }
             return sCrimeLab
         }
@@ -30,11 +35,5 @@ class CrimeLab private constructor(context: Context) {
 
     init {
         mCrimes = ArrayList()
-        for (i in 0..99) {
-            val crime = Crime()
-            crime.title = "Crime #$i"
-            crime.isSolved = i % 2 == 0
-            mCrimes.add(crime)
-        }
     }
 }
