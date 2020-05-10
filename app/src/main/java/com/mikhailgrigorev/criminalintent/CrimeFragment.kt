@@ -16,6 +16,7 @@ import java.util.*
 
 class CrimeFragment : Fragment() {
     private var ARG_CRIME_ID: String = "crime_id"
+    private var DIALOG_DATE = "DialogDate"
     private var mCrime: Crime? = null
     private var mTitleField: EditText? = null
     private var mDateButton: Button? = null
@@ -65,7 +66,14 @@ class CrimeFragment : Fragment() {
         })
         mDateButton = v.findViewById<View>(R.id.crime_date) as Button
         mDateButton!!.text = mCrime?.date
-        mDateButton!!.isEnabled = false
+        mDateButton!!.setOnClickListener (View.OnClickListener(){
+            val manager = fragmentManager
+            val dialog = DatePickerFragment()
+            if (manager != null) {
+                dialog.show(manager, DIALOG_DATE)
+            }
+
+        })
 
         mSolvedCheckbox = v.findViewById<View>(R.id.crime_solved) as CheckBox
         mSolvedCheckbox!!.isChecked = mCrime!!.isSolved

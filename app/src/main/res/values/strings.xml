@@ -8,5 +8,5 @@
     <string name="crime_date">Crime Date</string>
     <string name="button">Call</string>
     <string name="crime_solved">Crime Solved</string>
-
+    <string name="date_picker_title">Date of crime:</string>
 </resources>
