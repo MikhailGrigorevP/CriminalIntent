@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import com.mikhailgrigorev.criminalintent.database.CrimeDbSchema.CrimeTable
 
+
 class CrimeBaseHelper(context: Context?) :
     SQLiteOpenHelper(
         context,
@@ -15,14 +16,14 @@ class CrimeBaseHelper(context: Context?) :
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
             "create table " + CrimeTable.NAME + "(" +
-                    " _id integer primary key autoincrement, " +
-                    CrimeTable.Cols.UUID + ", " +
-                    CrimeTable.Cols.TITLE + ", " +
+                    " _id integer primary key autoincrement, " + CrimeTable.Cols.UUID + ", " + CrimeTable.Cols.TITLE + ", " +
                     CrimeTable.Cols.DATE + ", " +
-                    CrimeTable.Cols.SOLVED +
+                    CrimeTable.Cols.SOLVED + ", " +
+                    CrimeTable.Cols.SUSPECT +
                     ")"
         )
     }
+
 
     override fun onUpgrade(
         db: SQLiteDatabase,

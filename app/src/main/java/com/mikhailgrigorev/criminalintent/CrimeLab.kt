@@ -9,6 +9,7 @@ import com.mikhailgrigorev.criminalintent.database.CrimeCursorWrapper
 import com.mikhailgrigorev.criminalintent.database.CrimeDbSchema.CrimeTable
 import com.mikhailgrigorev.criminalintent.database.CrimeDbSchema.CrimeTable.Cols.DATE
 import com.mikhailgrigorev.criminalintent.database.CrimeDbSchema.CrimeTable.Cols.SOLVED
+import com.mikhailgrigorev.criminalintent.database.CrimeDbSchema.CrimeTable.Cols.SUSPECT
 import com.mikhailgrigorev.criminalintent.database.CrimeDbSchema.CrimeTable.Cols.TITLE
 import com.mikhailgrigorev.criminalintent.database.CrimeDbSchema.CrimeTable.Cols.UUID
 import java.util.*
@@ -91,6 +92,7 @@ class CrimeLab private constructor(context: Context) {
             values.put(TITLE, crime.title)
             values.put(DATE, crime.date.time)
             values.put(SOLVED, if (crime.isSolved) 1 else 0)
+            values.put(SUSPECT, crime.suspect)
             return values
         }
     }
