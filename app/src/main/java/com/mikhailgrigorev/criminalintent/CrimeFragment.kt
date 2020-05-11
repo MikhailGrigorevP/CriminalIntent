@@ -10,9 +10,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
+import android.widget.CompoundButton
 import android.widget.EditText
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import java.util.*
 
 
@@ -24,15 +24,15 @@ class CrimeFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val crimeId =
-            getArguments()?.getSerializable(ARG_CRIME_ID) as UUID
-        mCrime = CrimeLab[activity]!!.getCrime(crimeId)
+            arguments!!.getSerializable(ARG_CRIME_ID) as UUID?
+        mCrime = CrimeLab[activity!!]!!.getCrime(crimeId!!)
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        val v = inflater.inflate(R.layout.fragment_crime, container, false)
+    ): View? {
+        val v: View = inflater.inflate(R.layout.fragment_crime, container, false)
         mTitleField = v.findViewById<View>(R.id.crime_title) as EditText
         mTitleField!!.setText(mCrime!!.title)
         mTitleField!!.addTextChangedListener(object : TextWatcher {
@@ -58,23 +58,29 @@ class CrimeFragment : Fragment() {
         mDateButton = v.findViewById<View>(R.id.crime_date) as Button
         updateDate()
         mDateButton!!.setOnClickListener {
-            val manager: FragmentManager? = getFragmentManager()
+            val manager = fragmentManager
             val dialog = DatePickerFragment
                 .newInstance(mCrime!!.date)
             dialog.setTargetFragment(this@CrimeFragment, REQUEST_DATE)
-            if (manager != null) {
-                dialog.show(manager, DIALOG_DATE)
-            }
+            dialog.show(manager!!, DIALOG_DATE)
         }
         mSolvedCheckbox = v.findViewById<View>(R.id.crime_solved) as CheckBox
         mSolvedCheckbox!!.isChecked = mCrime!!.isSolved
-        mSolvedCheckbox!!.setOnCheckedChangeListener { _, isChecked ->
-            mCrime!!.isSolved = isChecked
-        }
+        mSolvedCheckbox!!.setOnCheckedChangeListener { buttonView, isChecked -> mCrime!!.isSolved = isChecked }
         return v
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    override fun onPause() {
+        super.onPause()
+        CrimeLab[activity!!]
+            ?.updateCrime(mCrime!!)
+    }
+
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?
+    ) {
         if (resultCode != Activity.RESULT_OK) {
             return
         }
@@ -98,7 +104,7 @@ class CrimeFragment : Fragment() {
             val args = Bundle()
             args.putSerializable(ARG_CRIME_ID, crimeId)
             val fragment = CrimeFragment()
-            fragment.setArguments(args)
+            fragment.arguments = args
             return fragment
         }
     }
