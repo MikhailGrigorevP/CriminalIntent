@@ -1,39 +1,56 @@
 package com.mikhailgrigorev.criminalintent
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.database.Cursor
-import android.net.Uri
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.provider.ContactsContract
+import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
 import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.CheckBox
-import android.widget.CompoundButton
-import android.widget.EditText
+import android.widget.*
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
+import java.io.File
 import java.util.*
 
 
 class CrimeFragment : Fragment() {
     private var mCrime: Crime? = null
+    private var mPhotoFile: File? = null
     private var mTitleField: EditText? = null
     private var mDateButton: Button? = null
     private var mSolvedCheckbox: CheckBox? = null
     private var mReportButton: Button? = null
     private var mSuspectButton: Button? = null
+    private var mPhotoButton: ImageButton? = null
+    private var mPhotoView: ImageView? = null
+    private var mCallbacks: Callbacks? = null
+
+    /**
+     * Required interface for hosting activities.
+     */
+    interface Callbacks {
+        fun onCrimeUpdated(crime: Crime?)
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        mCallbacks = context as Callbacks
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val crimeId =
             arguments!!.getSerializable(ARG_CRIME_ID) as UUID?
         mCrime = CrimeLab[activity!!]!!.getCrime(crimeId!!)
+        mPhotoFile = mCrime?.let { CrimeLab[activity!!]?.getPhotoFile(it) }
     }
 
     override fun onCreateView(
@@ -59,6 +76,7 @@ class CrimeFragment : Fragment() {
                 count: Int
             ) {
                 mCrime!!.title = s.toString()
+                updateCrime()
             }
 
             override fun afterTextChanged(s: Editable) {}
@@ -66,17 +84,18 @@ class CrimeFragment : Fragment() {
         mDateButton = v.findViewById<View>(R.id.crime_date) as Button
         updateDate()
         mDateButton!!.setOnClickListener {
-            val manager: FragmentManager? = fragmentManager
+            val manager = fragmentManager
             val dialog = DatePickerFragment
                 .newInstance(mCrime!!.date)
             dialog.setTargetFragment(this@CrimeFragment, REQUEST_DATE)
-            if (manager != null) {
-                dialog.show(manager, DIALOG_DATE)
-            }
+            dialog.show(manager!!, DIALOG_DATE)
         }
         mSolvedCheckbox = v.findViewById<View>(R.id.crime_solved) as CheckBox
         mSolvedCheckbox!!.isChecked = mCrime!!.isSolved
-        mSolvedCheckbox!!.setOnCheckedChangeListener { _, isChecked -> mCrime!!.isSolved = isChecked }
+        mSolvedCheckbox!!.setOnCheckedChangeListener { buttonView, isChecked ->
+            mCrime!!.isSolved = isChecked
+            updateCrime()
+        }
         mReportButton =
             v.findViewById<View>(R.id.crime_report) as Button
         mReportButton!!.setOnClickListener {
@@ -113,6 +132,35 @@ class CrimeFragment : Fragment() {
         ) {
             mSuspectButton!!.isEnabled = false
         }
+        mPhotoButton = v.findViewById<View>(R.id.crime_camera) as ImageButton
+        val captureImage = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        val canTakePhoto = mPhotoFile != null &&
+                captureImage.resolveActivity(packageManager) != null
+        mPhotoButton!!.isEnabled = canTakePhoto
+        mPhotoButton!!.setOnClickListener {
+            val uri = mPhotoFile?.let { it1 ->
+                FileProvider.getUriForFile(
+                    activity!!,
+                    "com.mikhailgrigorev.criminalintent.fileprovider",
+                    it1
+                )
+            }
+            captureImage.putExtra(MediaStore.EXTRA_OUTPUT, uri)
+            val cameraActivities = activity!!
+                .getPackageManager().queryIntentActivities(
+                    captureImage,
+                    PackageManager.MATCH_DEFAULT_ONLY
+                )
+            for (activity in cameraActivities) {
+                getActivity()!!.grantUriPermission(
+                    activity.activityInfo.packageName,
+                    uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
+            }
+            startActivityForResult(captureImage, REQUEST_PHOTO)
+        }
+        mPhotoView = v.findViewById<View>(R.id.crime_photo) as ImageView
+        updatePhotoView()
         return v
     }
 
@@ -120,6 +168,11 @@ class CrimeFragment : Fragment() {
         super.onPause()
         CrimeLab[activity!!]
             ?.updateCrime(mCrime!!)
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        mCallbacks = null
     }
 
     override fun onActivityResult(
@@ -134,9 +187,10 @@ class CrimeFragment : Fragment() {
             val date = data
                 ?.getSerializableExtra(DatePickerFragment.EXTRA_DATE) as Date
             mCrime!!.date = date
+            updateCrime()
             updateDate()
         } else if (requestCode == REQUEST_CONTACT && data != null) {
-            val contactUri: Uri? = data.data
+            val contactUri = data.data
             // Specify which fields you want your query to return
             // values for.
             val queryFields = arrayOf(
@@ -144,25 +198,43 @@ class CrimeFragment : Fragment() {
             )
             // Perform your query - the contactUri is like a "where"
             // clause here
-            val c: Cursor? = contactUri?.let {
-                activity!!.contentResolver
-                    .query(it, queryFields, null, null, null)
-            }
-            c.use { c ->
+            val c = activity!!.contentResolver
+                .query(contactUri!!, queryFields, null, null, null)
+            try {
                 // Double-check that you actually got results
-                if (c != null) {
-                    if (c.getCount() === 0) {
-                        return
-                    }
+                if (c!!.count == 0) {
+                    return
                 }
                 // Pull out the first column of the first row of data -
                 // that is your suspect's name.
-                c?.moveToFirst()
-                val suspect: String = c!!.getString(0)
+                c.moveToFirst()
+                val suspect = c.getString(0)
                 mCrime!!.suspect = suspect
+                updateCrime()
                 mSuspectButton!!.text = suspect
+            } finally {
+                c!!.close()
             }
+        } else if (requestCode == REQUEST_PHOTO) {
+            val uri = mPhotoFile?.let {
+                FileProvider.getUriForFile(
+                    activity!!,
+                    "com.mikhailgrigorev.criminalintent.fileprovider",
+                    it
+                )
+            }
+            activity!!.revokeUriPermission(
+                uri,
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
+            updateCrime()
+            updatePhotoView()
         }
+    }
+
+    private fun updateCrime() {
+        CrimeLab[activity!!]!!.updateCrime(mCrime!!)
+        mCallbacks!!.onCrimeUpdated(mCrime)
     }
 
     private fun updateDate() {
@@ -192,11 +264,25 @@ class CrimeFragment : Fragment() {
             )
         }
 
+    private fun updatePhotoView() {
+        if (mPhotoFile == null || !mPhotoFile!!.exists()) {
+            mPhotoView?.setImageDrawable(null)
+        } else {
+            val bitmap: Bitmap? = activity?.let {
+                PictureUtils.getScaledBitmap(
+                    mPhotoFile!!.getPath(), it
+                )
+            }
+            mPhotoView?.setImageBitmap(bitmap)
+        }
+    }
+
     companion object {
         private const val ARG_CRIME_ID = "crime_id"
         private const val DIALOG_DATE = "DialogDate"
         private const val REQUEST_DATE = 0
         private const val REQUEST_CONTACT = 1
+        private const val REQUEST_PHOTO = 2
         fun newInstance(crimeId: UUID?): CrimeFragment {
             val args = Bundle()
             args.putSerializable(ARG_CRIME_ID, crimeId)

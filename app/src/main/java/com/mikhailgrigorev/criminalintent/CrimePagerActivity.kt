@@ -1,17 +1,18 @@
 package com.mikhailgrigorev.criminalintent
+
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.FragmentPagerAdapter
+import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.viewpager.widget.ViewPager
 import java.util.*
 
 
-class CrimePagerActivity : AppCompatActivity() {
+class CrimePagerActivity : AppCompatActivity(),
+    CrimeFragment.Callbacks {
     private var mViewPager: ViewPager? = null
     private var mCrimes: List<Crime>? = null
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,9 +21,9 @@ class CrimePagerActivity : AppCompatActivity() {
         val crimeId = intent
             .getSerializableExtra(EXTRA_CRIME_ID) as UUID
         mViewPager = findViewById<View>(R.id.crime_view_pager) as ViewPager
-        mCrimes = CrimeLab[this]!!.crimes
-        val fragmentManager: FragmentManager = supportFragmentManager
-        mViewPager!!.adapter = object : FragmentPagerAdapter(fragmentManager, FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
+        mCrimes = CrimeLab[this]?.crimes
+        val fragmentManager = supportFragmentManager
+        mViewPager!!.adapter = object : FragmentStatePagerAdapter(fragmentManager) {
             override fun getItem(position: Int): Fragment {
                 val crime = mCrimes!![position]
                 return CrimeFragment.newInstance(crime.id)
@@ -39,6 +40,8 @@ class CrimePagerActivity : AppCompatActivity() {
             }
         }
     }
+
+    override fun onCrimeUpdated(crime: Crime?) {}
 
     companion object {
         private const val EXTRA_CRIME_ID =

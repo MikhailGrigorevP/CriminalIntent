@@ -1,5 +1,6 @@
 package com.mikhailgrigorev.criminalintent
 
+import android.content.Context
 import android.os.Bundle
 import android.view.*
 import android.view.LayoutInflater
@@ -16,6 +17,20 @@ class CrimeListFragment : Fragment() {
     private var mCrimeRecyclerView: RecyclerView? = null
     private var mAdapter: CrimeAdapter? = null
     private var mSubtitleVisible = false
+    private var mCallbacks: Callbacks? = null
+
+    /**
+     * Required interface for hosting activities.
+     */
+    interface Callbacks {
+        fun onCrimeSelected(crime: Crime?)
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        mCallbacks = context as Callbacks
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
@@ -47,6 +62,11 @@ class CrimeListFragment : Fragment() {
         outState.putBoolean(SAVED_SUBTITLE_VISIBLE, mSubtitleVisible)
     }
 
+    override fun onDetach() {
+        super.onDetach()
+        mCallbacks = null
+    }
+
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
         inflater.inflate(R.menu.fragment_crime_list, menu)
@@ -63,9 +83,8 @@ class CrimeListFragment : Fragment() {
             R.id.new_crime -> {
                 val crime = Crime()
                 CrimeLab[activity!!]!!.addCrime(crime)
-                val intent = CrimePagerActivity
-                    .newIntent(activity, crime.id)
-                startActivity(intent)
+                updateUI()
+                mCallbacks!!.onCrimeSelected(crime)
                 true
             }
             R.id.show_subtitle -> {
@@ -89,7 +108,7 @@ class CrimeListFragment : Fragment() {
         activity!!.supportActionBar!!.subtitle = subtitle
     }
 
-    private fun updateUI() {
+    fun updateUI() {
         val crimeLab = CrimeLab[activity!!]
         val crimes = crimeLab!!.crimes
         if (mAdapter == null) {
@@ -117,8 +136,7 @@ class CrimeListFragment : Fragment() {
         }
 
         override fun onClick(view: View?) {
-            val intent = CrimePagerActivity.newIntent(activity, mCrime!!.id)
-            startActivity(intent)
+            mCallbacks!!.onCrimeSelected(mCrime)
         }
 
         init {

@@ -2,7 +2,6 @@ package com.mikhailgrigorev.criminalintent
 
 import android.content.ContentValues
 import android.content.Context
-import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import com.mikhailgrigorev.criminalintent.database.CrimeBaseHelper
 import com.mikhailgrigorev.criminalintent.database.CrimeCursorWrapper
@@ -12,11 +11,12 @@ import com.mikhailgrigorev.criminalintent.database.CrimeDbSchema.CrimeTable.Cols
 import com.mikhailgrigorev.criminalintent.database.CrimeDbSchema.CrimeTable.Cols.SUSPECT
 import com.mikhailgrigorev.criminalintent.database.CrimeDbSchema.CrimeTable.Cols.TITLE
 import com.mikhailgrigorev.criminalintent.database.CrimeDbSchema.CrimeTable.Cols.UUID
+import java.io.File
 import java.util.*
 
 
 class CrimeLab private constructor(context: Context) {
-    private val mContext: Context = context.applicationContext
+    private val mContext: Context
     private val mDatabase: SQLiteDatabase
     fun addCrime(c: Crime) {
         val values = getContentValues(c)
@@ -26,7 +26,7 @@ class CrimeLab private constructor(context: Context) {
     val crimes: List<Crime>
         get() {
             val crimes: MutableList<Crime> = ArrayList()
-            val cursor: CrimeCursorWrapper = queryCrimes(null, null)
+            val cursor = queryCrimes(null, null)
             try {
                 cursor.moveToFirst()
                 while (!cursor.isAfterLast) {
@@ -40,16 +40,23 @@ class CrimeLab private constructor(context: Context) {
         }
 
     fun getCrime(id: UUID): Crime? {
-        val cursor: CrimeCursorWrapper = queryCrimes(
-            CrimeTable.Cols.UUID + " = ?", arrayOf(id.toString())
+        val cursor = queryCrimes(
+            "$UUID = ?", arrayOf(id.toString())
         )
-        return cursor.use { cursor ->
-            if (cursor.getCount() === 0) {
+        return try {
+            if (cursor.count == 0) {
                 return null
             }
             cursor.moveToFirst()
             cursor.crime
+        } finally {
+            cursor.close()
         }
+    }
+
+    fun getPhotoFile(crime: Crime): File {
+        val filesDir: File = mContext.filesDir
+        return File(filesDir, crime.photoFilename)
     }
 
     fun updateCrime(crime: Crime) {
@@ -57,7 +64,7 @@ class CrimeLab private constructor(context: Context) {
         val values = getContentValues(crime)
         mDatabase.update(
             CrimeTable.NAME, values,
-            CrimeTable.Cols.UUID + " = ?", arrayOf(uuidString)
+            "$UUID = ?", arrayOf(uuidString)
         )
     }
 
@@ -65,7 +72,7 @@ class CrimeLab private constructor(context: Context) {
         whereClause: String?,
         whereArgs: Array<String>?
     ): CrimeCursorWrapper {
-        val cursor: Cursor = mDatabase.query(
+        val cursor = mDatabase.query(
             CrimeTable.NAME,
             null,  // Columns - null selects all columns
             whereClause,
@@ -98,6 +105,7 @@ class CrimeLab private constructor(context: Context) {
     }
 
     init {
+        mContext = context.applicationContext
         mDatabase = CrimeBaseHelper(mContext)
             .writableDatabase
     }

@@ -12,7 +12,6 @@
     <string name="new_crime">New Crime</string>
     <string name="show_subtitle">Show Subtitle</string>
     <string name="hide_subtitle">Hide Subtitle</string>
-    <string name="subtitle_format">%1$d crimes</string>
     <plurals name="subtiltle_plural">
         <item quantity="one">%1$d crime</item>
         <item quantity="other">%1$d crimes</item>
@@ -28,4 +27,8 @@
     <string name="crime_report_suspect">the suspect is %s.</string>
     <string name="crime_report_subject">CriminalIntent Crime Report</string>
     <string name="send_report">Send crime report via</string>
+    <string name="solved">Solved</string>
+    <string name="photo">Photo</string>
+    <string name="camera">Camera</string>
+    <string name="subtitle_format">%1$d crimes</string>
 </resources>
